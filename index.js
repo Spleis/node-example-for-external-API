@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const sha256 = require('crypto-js/sha256');
 const bodyParser = require('body-parser')
 const crypto = require('crypto');
+const micro = require('micro');
 const app = express();
 
 require('dotenv').config()
@@ -21,11 +22,12 @@ app.get('*', function (req, res) {
 
 function verifyJwtToken(req) {
     const jwtTokenFromRequest = req.headers.authorization;
-    return jwt.verify(jwtTokenFromRequest, EXTERNAL_DATA_PUBLIC_KEY_TEST);
+    return jwt.verify(jwtTokenFromRequest, EXTERNAL_DATA_PUBLIC_KEY_PROD);
 }
 
 app.post('*', function (req, res) {
     const { requestId, data } = req.body;
+    const microRequest = micro.json(req);
 
     try {
         const jwtContent = verifyJwtToken(req);
@@ -40,6 +42,9 @@ app.post('*', function (req, res) {
         if (hashedBody !== jwtContent.hashedData || hashedBody2 !== jwtContent.hashedData) {
             throw new Error('The signature in the JWT-Token does not match the hash of the data sent.');
         }
+
+        const parsedData = JSON.parse(data);
+        console.log('parsedData', parsedData);
 
         console.log('Everything is verified and good to go: ', jwtContent);
     } catch (error) {
